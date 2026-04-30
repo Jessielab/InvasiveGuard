@@ -4,10 +4,8 @@
 import csv
 import os
 
-# CSV文件路径（相对于项目根目录）
 CSV_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "iucn_threatened_species.csv")
 
-# 等级含义映射
 CATEGORY_MEANING = {
     "EX": "灭绝",
     "EW": "野外灭绝",
@@ -21,10 +19,6 @@ CATEGORY_MEANING = {
 
 
 def _load_csv() -> dict:
-    """
-    将CSV文件加载为字典：{学名小写: {"category": 等级, "full_name": 原始学名}}
-    只在第一次调用时加载，后续使用缓存
-    """
     if not hasattr(_load_csv, "_cache"):
         data = {}
         try:
@@ -49,15 +43,9 @@ def _load_csv() -> dict:
 
 
 def fetch_assessment(species_name: str) -> dict:
-    """
-    在本地IUCN CSV中查询物种保护等级
-    参数：species_name - 拉丁学名
-    返回：{"found": bool, "category": str, "meaning": str, "full_name": str}
-    """
     data = _load_csv()
-    
-    # 精确匹配
     name_lower = species_name.strip().lower()
+    
     if name_lower in data:
         entry = data[name_lower]
         return {
@@ -67,7 +55,6 @@ def fetch_assessment(species_name: str) -> dict:
             "full_name": entry["full_name"],
         }
     
-    # 模糊匹配：遍历所有键，看是否包含输入的物种名
     for key, entry in data.items():
         if name_lower in key:
             return {
@@ -83,3 +70,21 @@ def fetch_assessment(species_name: str) -> dict:
         "meaning": "该物种不在IUCN受威胁物种名录中",
         "full_name": species_name,
     }
+
+
+def get_threatened_species(categories: list = None) -> list:
+    if categories is None:
+        categories = ["CR", "EN", "EW"]
+    
+    data = _load_csv()
+    results = []
+    
+    for name_lower, entry in data.items():
+        if entry["category"] in categories:
+            results.append({
+                "scientific_name": entry["full_name"],
+                "category": entry["category"],
+                "meaning": CATEGORY_MEANING.get(entry["category"], entry["category"]),
+            })
+    
+    return results

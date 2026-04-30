@@ -21,3 +21,11 @@ NORMAL_INAT_RATIO = 0.5           # iNaturalist低于GBIF此比例视为正常
 LLM_MODEL = "deepseek-chat"
 LLM_TEMPERATURE_PARSE = 0.1       # 解析阶段：低温度确保稳定
 LLM_TEMPERATURE_ANALYSIS = 0.3    # 分析阶段：适度创造性
+
+# 邮件配置（Gmail）
+EMAIL_SMTP_SERVER = "smtp.gmail.com"
+EMAIL_SMTP_PORT = 587
+
+# 每日监测配置
+MONITOR_CATEGORIES = ["EN", "CR", "EW"]  # 需要监测的濒危等级
+INAT_CHECK_DAYS = 7                       # 检查iNaturalist最近几天的记录

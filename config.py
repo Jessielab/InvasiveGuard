@@ -5,7 +5,8 @@ INATURALIST_API = "https://api.inaturalist.org/v1/observations"
 GBIF_SPECIES_API = "https://api.gbif.org/v1/species/match"
 GBIF_OCCURRENCE_API = "https://api.gbif.org/v1/occurrence/search"
 LLM_API = "https://api.deepseek.com/v1/chat/completions"
-
+# IUCN API配置
+IUCN_API = "https://api.iucnredlist.org/api/v4"
 # 查询参数
 YEARS_BACK = 3                    # iNaturalist回溯年数
 INAT_PER_PAGE = 30                # iNaturalist每页结果数

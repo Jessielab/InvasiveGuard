@@ -1,6 +1,6 @@
 """
 InvasiveGuard —— 入侵物种早期预警Agent
-主循环入口
+主循环入口（含IUCN交叉验证）
 """
 
 import os
@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from tools.input_parser import parse_user_input
 from tools.inaturalist import fetch_observations as sensor_inat
 from tools.gbif import get_species_key, fetch_occurrence_stats as sensor_gbif
+from tools.iucn import fetch_assessment as sensor_iucn
 from tools.risk_engine import assess as assess_risk
 from tools.llm_analyzer import analyze as actuator_analyze
 
@@ -26,6 +27,8 @@ def print_banner():
 
 def main():
     api_key = os.getenv("API_KEY")
+    iucn_key = os.getenv("IUCN_API_KEY")
+    
     if not api_key:
         print("❌ 未找到 API_KEY，请在 .env 文件中设置。")
         return
@@ -47,7 +50,7 @@ def main():
 
     # ─── Sensor 1: iNaturalist ───
     print(f"\n📸 [Sensor 1] 正在查询 iNaturalist...")
-    inat_data = sensor_inat(species, country)
+    inat_data = sensor_inat(species, parsed["inat_place_id"])
     print(f"   ✅ 近3年记录数: {inat_data['total']}")
 
     # ─── Sensor 2: GBIF ───
@@ -60,6 +63,18 @@ def main():
         print(f"   GBIF usageKey: {species_key}")
         gbif_data = sensor_gbif(species_key, country)
         print(f"   ✅ 全部历史: {gbif_data['total_historical']} | 近3年: {gbif_data['recent_3yr']}")
+
+    # ─── Sensor 3: IUCN ───
+    iucn_data = None
+    if iucn_key:
+        print(f"\n🌍 [Sensor 3] 正在查询 IUCN 受威胁物种名录（本地数据）...")
+        iucn_data = sensor_iucn(species)
+        if iucn_data.get("found"):
+            print(f"   保护等级: {iucn_data.get('category', '未知')} ({iucn_data.get('meaning', '')})")
+        else:
+            print(f"   ⚠️ {iucn_data['category']}")
+    else:
+        print(f"\n🌍 [Sensor 3] 未配置IUCN_API_KEY，跳过IUCN查询")
 
     # ─── Agent推理 ───
     print(f"\n🧠 [Agent推理] 正在对比两侧数据...")
@@ -84,7 +99,8 @@ def main():
             inat_locations="\n".join(inat_data["locations"][:8]),
             inat_descriptions="\n---\n".join(inat_data["sample_descriptions"][:5]),
             risk_level=risk["level"],
-            risk_reason=risk["reason"]
+            risk_reason=risk["reason"],
+            iucn_data=iucn_data
         )
         print(f"\n{'=' * 60}")
         print(f"📋 预警分析报告")
@@ -92,6 +108,8 @@ def main():
         print(f"物种: {species}")
         print(f"区域: {country}")
         print(f"风险等级: {risk['level']}")
+        if iucn_data and iucn_data.get("found"):
+            print(f"IUCN保护等级: {iucn_data.get('category', '未知')} ({iucn_data.get('meaning', '')})")
         print(f"{'=' * 60}")
         print(analysis)
         print(f"{'=' * 60}")

@@ -8,8 +8,9 @@ from prompts import get_analysis_prompt
 def analyze(api_key: str, species: str, country: str,
             gbif_total: int, gbif_recent: int,
             inat_total: int, inat_locations: str, inat_descriptions: str,
-            risk_level: str, risk_reason: str) -> str:
-    """调用大模型进行生态学解读"""
+            risk_level: str, risk_reason: str,
+            iucn_data: dict = None) -> str:
+    """调用大模型进行生态学解读（含IUCN交叉验证）"""
 
     prompt = get_analysis_prompt(
         species=species,
@@ -20,7 +21,8 @@ def analyze(api_key: str, species: str, country: str,
         inat_locations=inat_locations,
         inat_descriptions=inat_descriptions,
         risk_level=risk_level,
-        risk_reason=risk_reason
+        risk_reason=risk_reason,
+        iucn_data=iucn_data
     )
 
     headers = {
